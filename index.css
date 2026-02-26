@@ -239,7 +239,8 @@ p {
 }
 
 .primary-workspace {
-  flex: 0 0 calc(70% - (var(--space-40) / 2));
+  flex: 1;
+  width: 100%;
 }
 
 .secondary-panel {
@@ -519,6 +520,55 @@ button,
   display: flex;
   gap: var(--space-16);
   margin-top: var(--space-16);
+}
+
+.badge-score-green {
+  background: rgba(103, 142, 89, 0.1) !important;
+  color: var(--color-success) !important;
+  border-color: rgba(103, 142, 89, 0.2) !important;
+}
+
+.badge-score-amber {
+  background: rgba(203, 162, 88, 0.1) !important;
+  color: var(--color-warning) !important;
+  border-color: rgba(203, 162, 88, 0.2) !important;
+}
+
+.badge-score-neutral {
+  background: rgba(17, 17, 17, 0.05) !important;
+  color: var(--color-text) !important;
+  border-color: rgba(17, 17, 17, 0.1) !important;
+}
+
+.badge-score-grey {
+  background: rgba(17, 17, 17, 0.02) !important;
+  color: rgba(17, 17, 17, 0.4) !important;
+  border-color: rgba(17, 17, 17, 0.05) !important;
+}
+
+.checkbox-group {
+  display: flex;
+  gap: var(--space-16);
+  align-items: center;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--color-accent);
+}
+
+.toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--space-24);
 }
 
 /* MODAL */
