@@ -138,7 +138,6 @@ function computeMatchScore(job, prefs) {
   return { score };
 }
 
-// Ensure globally accessible functions
 window.toggleSaveJob = toggleSaveJob;
 window.viewJob = viewJob;
 
@@ -245,7 +244,6 @@ function initDashboard() {
         </div>
       `;
     } else {
-      // Create a fragment to avoid huge reflows
       jobListEl.innerHTML = filtered.map(createJobCardHTML).join('');
     }
   }
@@ -324,6 +322,34 @@ function initSettings() {
       btnSave.style.backgroundColor = 'var(--color-accent)';
     }, 2000);
   });
+
+  const btnClear = document.getElementById('clear-prefs');
+  btnClear.addEventListener('click', () => {
+    // Completely wipe all user settings and force reload the dataset
+    localStorage.removeItem('jobTrackerPreferences');
+    userPreferences = null;
+
+    // Clear today's digest so next time it recalculates with correct empty states
+    const today = new Date().toISOString().split('T')[0];
+    localStorage.removeItem('jobTrackerDigest_' + today);
+
+    // Wipe local array outputs
+    inputRole.value = '';
+    Array.from(inputLocs.options).forEach(opt => opt.selected = false);
+    chkRemote.checked = false;
+    chkHybrid.checked = false;
+    chkOnsite.checked = false;
+    selectExp.value = 'Fresher';
+    inputSkills.value = '';
+    valSlider.value = 40;
+    displayScore.innerText = 40;
+
+    const oldText = btnClear.innerText;
+    btnClear.innerText = "Cleared!";
+    setTimeout(() => {
+      btnClear.innerText = oldText;
+    }, 2000);
+  });
 }
 
 function initSaved() {
@@ -342,8 +368,139 @@ function initSaved() {
   }
 }
 
+function initDigest() {
+  const container = document.getElementById('digest-container');
+  if (!userPreferences) {
+    container.innerHTML = `
+      <div class="state-empty" style="border: none; background: #fff; padding: var(--space-64); text-align: left; max-width: 720px;">
+        <h3 style="font-size: 24px;">Set preferences to generate a personalized digest.</h3>
+        <button class="btn btn-primary" style="margin-top: 16px;" onclick="navigateTo('/settings')">Go to Settings</button>
+      </div>
+    `;
+    return;
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const digestKey = 'jobTrackerDigest_' + today;
+
+  function renderDigestView(digestJobIds) {
+    const jobs = digestJobIds.map(id => window.jobsData.find(j => j.id === id)).filter(Boolean);
+
+    if (jobs.length === 0) {
+      container.innerHTML = `
+        <div class="state-empty" style="border: none; background: #fff; padding: var(--space-64); text-align: left; max-width: 720px;">
+          <h3 style="font-size: 24px;">No matching roles today. Check again tomorrow.</h3>
+        </div>
+      `;
+      return;
+    }
+
+    const jobHtml = jobs.map((job, idx) => {
+      const matchData = computeMatchScore(job, userPreferences);
+      const isLast = idx === jobs.length - 1;
+      return `
+        <div style="border-bottom: 1px solid rgba(17,17,17,0.1); padding: 24px 0; ${isLast ? 'border-bottom: none;' : ''}">
+          <div style="display:flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <h3 style="font-size: 20px; font-family: var(--font-heading); margin: 0;">${job.title}</h3>
+            <span style="font-weight: 600; color: var(--color-success); background: rgba(103, 142, 89, 0.1); padding: 4px 8px; border-radius: 4px; font-size: 14px;">Match: ${matchData.score}%</span>
+          </div>
+          <div style="color: rgba(17,17,17,0.7); font-size: 16px; margin-bottom: 12px;">${job.company} • ${job.location} • ${job.experience}</div>
+          <a href="${job.applyUrl}" target="_blank" class="btn btn-primary" style="font-size: 14px; padding: 8px 16px; text-decoration: none;">Apply Now</a>
+        </div>
+      `;
+    }).join('');
+
+    const formattedDate = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    container.innerHTML = `
+      <div style="margin-bottom: 24px; display: flex; gap: 16px;">
+        <button id="btn-copy-digest" class="btn btn-secondary">Copy Digest to Clipboard</button>
+        <button id="btn-email-digest" class="btn btn-secondary">Create Email Draft</button>
+      </div>
+      <div class="card" style="max-width: 720px; padding: var(--space-64); margin-bottom: 0;">
+        <div style="text-align: center; margin-bottom: 40px;">
+          <h2 style="font-size: 28px; margin-bottom: 8px;">Top 10 Jobs For You — 9AM Digest</h2>
+          <div style="color: rgba(17,17,17,0.6); font-size: 16px;">${formattedDate}</div>
+        </div>
+        ${jobHtml}
+        <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid rgba(17,17,17,0.1); text-align: center; color: rgba(17,17,17,0.5); font-size: 14px;">
+          This digest was generated based on your preferences.
+        </div>
+      </div>
+    `;
+
+    const btnCopy = document.getElementById('btn-copy-digest');
+    if (btnCopy) {
+      btnCopy.addEventListener('click', () => {
+        let textToCopy = "Top 10 Jobs For You — 9AM Digest\n" + formattedDate + "\n\n";
+        textToCopy += jobs.map(j => {
+          const matchData = computeMatchScore(j, userPreferences);
+          return j.title + " at " + j.company + "\nMatch: " + matchData.score + "%\nLocation: " + j.location + "\nExperience: " + j.experience + "\nApply: " + j.applyUrl;
+        }).join('\n\n');
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          btnCopy.innerText = "Copied!";
+          setTimeout(() => btnCopy.innerText = "Copy Digest to Clipboard", 2000);
+        });
+      });
+    }
+
+    const btnEmail = document.getElementById('btn-email-digest');
+    if (btnEmail) {
+      btnEmail.addEventListener('click', () => {
+        let textBody = "Top 10 Jobs For You — 9AM Digest\n" + formattedDate + "\n\n";
+        textBody += jobs.map(j => {
+          const matchData = computeMatchScore(j, userPreferences);
+          return j.title + " at " + j.company + "\nMatch: " + matchData.score + "%\nLocation: " + j.location + "\nExperience: " + j.experience + "\nApply: " + j.applyUrl;
+        }).join('\n\n');
+
+        const mailtoLink = "mailto:?subject=" + encodeURIComponent("My 9AM Job Digest") + "&body=" + encodeURIComponent(textBody);
+        window.open(mailtoLink, '_self');
+      });
+    }
+  }
+
+  const existingDigest = localStorage.getItem(digestKey);
+  if (existingDigest) {
+    renderDigestView(JSON.parse(existingDigest));
+  } else {
+    // Show generator UI
+    container.innerHTML = `
+      <div class="state-empty" style="border: none; background: #fff; padding: var(--space-64); text-align: left; max-width: 720px;">
+        <h3 style="font-size: 24px;">Your digest is ready to be compiled</h3>
+        <p style="margin: 0 0 24px 0; color: rgba(17,17,17,0.7);">Demo Mode: Daily 9AM trigger simulated manually.</p>
+        <button id="generate-digest-btn" class="btn btn-primary">Generate Today's 9AM Digest (Simulated)</button>
+      </div>
+    `;
+
+    const generateBtn = document.getElementById('generate-digest-btn');
+    if (generateBtn) {
+      generateBtn.addEventListener('click', () => {
+        const filtered = window.jobsData.filter(job => {
+          const matchInfo = computeMatchScore(job, userPreferences);
+          return matchInfo.score >= userPreferences.minMatchScore;
+        });
+
+        filtered.sort((a, b) => {
+          const scoreA = computeMatchScore(a, userPreferences).score;
+          const scoreB = computeMatchScore(b, userPreferences).score;
+          if (scoreB !== scoreA) {
+            return scoreB - scoreA;
+          }
+          return a.postedDaysAgo - b.postedDaysAgo;
+        });
+
+        const top10 = filtered.slice(0, 10);
+        const top10Ids = top10.map(j => j.id);
+
+        localStorage.setItem(digestKey, JSON.stringify(top10Ids));
+        renderDigestView(top10Ids);
+      });
+    }
+  }
+}
+
 function renderPage(pathname) {
-  // Update active links
   navLinks.forEach(link => {
     if (link.getAttribute('href') === pathname) {
       link.classList.add('active');
@@ -352,7 +509,6 @@ function renderPage(pathname) {
     }
   });
 
-  // Render content
   let contentHtml = '';
 
   if (pathname === '/') {
@@ -479,7 +635,10 @@ function renderPage(pathname) {
           <input type="range" id="min-score" min="0" max="100" value="40" />
         </div>
 
-        <button id="save-prefs" class="btn btn-primary">Save Preferences</button>
+        <div style="display: flex; gap: 16px;">
+          <button id="save-prefs" class="btn btn-primary">Save Preferences</button>
+          <button id="clear-prefs" class="btn btn-secondary" style="border-color: rgba(139, 0, 0, 0.5); color: #8B0000; background: rgba(139, 0, 0, 0.05);">Clear Preferences & Data</button>
+        </div>
       </div>
     `;
     setTimeout(() => initSettings(), 0);
@@ -496,11 +655,9 @@ function renderPage(pathname) {
       <header class="context-header">
         <h1>Daily Digest</h1>
       </header>
-      <div class="state-empty" style="border: none; background: #fff; padding: var(--space-64); text-align: left; max-width: 720px;">
-        <h3 style="font-size: 24px;">Your digest is empty</h3>
-        <p style="margin: 0; color: rgba(17,17,17,0.7);">This section will hold a compiled daily summary of the absolute best matches.</p>
-      </div>
+      <div id="digest-container"></div>
     `;
+    setTimeout(() => initDigest(), 0);
   } else if (pathname === '/proof') {
     contentHtml = `
       <header class="context-header">
