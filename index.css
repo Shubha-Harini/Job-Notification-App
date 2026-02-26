@@ -621,3 +621,103 @@ input[type="range"] {
 .modal-close:hover {
   color: var(--color-text);
 }
+
+/* TOAST NOTIFICATION */
+#toast-container {
+  position: fixed;
+  bottom: var(--space-24);
+  right: var(--space-24);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 2000;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--color-background);
+  color: var(--color-text);
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(17, 17, 17, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+  font-weight: 500;
+  animation: slideInUp 0.3s ease forwards;
+  pointer-events: auto;
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* JOB STATUS SELECT */
+.status-select {
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(17, 17, 17, 0.2);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  outline: none;
+  appearance: none;
+}
+
+.status-select.status-Not-Applied {
+  color: var(--color-text);
+  border-color: rgba(17, 17, 17, 0.2);
+}
+
+.status-select.status-Applied {
+  color: #0052CC;
+  background: rgba(0, 82, 204, 0.05);
+  border-color: rgba(0, 82, 204, 0.2);
+}
+
+.status-select.status-Rejected {
+  color: var(--color-error);
+  background: rgba(139, 0, 0, 0.05);
+  border-color: rgba(139, 0, 0, 0.2);
+}
+
+.status-select.status-Selected {
+  color: var(--color-success);
+  background: rgba(103, 142, 89, 0.05);
+  border-color: rgba(103, 142, 89, 0.2);
+}
+
+
+
+/* CLEAR FILTER BUTTON */
+#clear-filters-btn {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 500;
+  padding: 10px 16px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  border: 1px solid rgba(17, 17, 17, 0.2) !important;
+  border-radius: var(--radius);
+  background: white;
+  color: rgba(17, 17, 17, 0.7);
+  cursor: pointer;
+}
+
+#clear-filters-btn:hover {
+  border-color: rgba(139, 0, 0, 0.5) !important;
+  background: rgba(139, 0, 0, 0.05);
+  color: #8B0000;
+}

@@ -14,6 +14,54 @@ const mobileNav = document.getElementById('mobile-nav');
 
 let savedJobIds = JSON.parse(localStorage.getItem('savedJobs') || '[]');
 let userPreferences = JSON.parse(localStorage.getItem('jobTrackerPreferences')) || null;
+let jobStatuses = JSON.parse(localStorage.getItem('jobTrackerStatus') || '{}');
+let jobStatusUpdates = JSON.parse(localStorage.getItem('jobTrackerStatusUpdates') || '[]');
+
+function showToast(message) {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerText = message;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+function handleStatusChange(jobId, company, title, selectElement) {
+  const newStatus = selectElement.value;
+  jobStatuses[jobId] = newStatus;
+  localStorage.setItem('jobTrackerStatus', JSON.stringify(jobStatuses));
+
+  selectElement.className = 'status-select status-' + newStatus.replace(' ', '-');
+
+  if (newStatus !== 'Not Applied') {
+    showToast(`Status updated: ${newStatus}`);
+
+    const updateRecord = {
+      jobId,
+      title,
+      company,
+      status: newStatus,
+      date: new Date().toLocaleDateString()
+    };
+    jobStatusUpdates.unshift(updateRecord);
+    if (jobStatusUpdates.length > 50) jobStatusUpdates.pop();
+    localStorage.setItem('jobTrackerStatusUpdates', JSON.stringify(jobStatusUpdates));
+  }
+}
+
+// Ensure globally accessible functions
+window.toggleSaveJob = toggleSaveJob;
+window.viewJob = viewJob;
+window.handleStatusChange = handleStatusChange;
 
 function toggleSaveJob(id, btnElement) {
   const index = savedJobIds.indexOf(id);
@@ -160,6 +208,9 @@ function createJobCardHTML(job) {
     scoreBadgeHtml = `<span class="badge ${scoreClass}">Match: ${matchData.score}%</span>`;
   }
 
+  const currentStatus = jobStatuses[job.id] || 'Not Applied';
+  const statusClass = 'status-' + currentStatus.replace(' ', '-');
+
   return `
     <div class="job-card">
       <div class="job-header">
@@ -176,10 +227,20 @@ function createJobCardHTML(job) {
         <span class="badge">${job.salaryRange}</span>
         <span class="badge badge-source">${job.source}</span>
       </div>
-      <div class="job-actions">
-        <button class="btn btn-primary" onclick="window.open('${job.applyUrl}', '_blank')">Apply</button>
-        <button class="btn btn-secondary" onclick="viewJob('${job.id}')">View</button>
-        <button class="btn btn-secondary" onclick="toggleSaveJob('${job.id}', this)">${isSaved ? 'Saved' : 'Save'}</button>
+      <div class="job-actions" style="justify-content: space-between; align-items: center;">
+        <div style="display:flex; gap: 8px;">
+          <button class="btn btn-primary" onclick="window.open('${job.applyUrl}', '_blank')">Apply</button>
+          <button class="btn btn-secondary" onclick="viewJob('${job.id}')">View</button>
+          <button class="btn btn-secondary" onclick="toggleSaveJob('${job.id}', this)">${isSaved ? 'Saved' : 'Save'}</button>
+        </div>
+        <div>
+          <select class="status-select ${statusClass}" onchange="handleStatusChange('${job.id}', '${job.company.replace(/'/g, "\\'")}', '${job.title.replace(/'/g, "\\'")}', this)">
+            <option value="Not Applied" ${currentStatus === 'Not Applied' ? 'selected' : ''}>Not Applied</option>
+            <option value="Applied" ${currentStatus === 'Applied' ? 'selected' : ''}>Applied</option>
+            <option value="Rejected" ${currentStatus === 'Rejected' ? 'selected' : ''}>Rejected</option>
+            <option value="Selected" ${currentStatus === 'Selected' ? 'selected' : ''}>Selected</option>
+          </select>
+        </div>
       </div>
     </div>
   `;
@@ -193,6 +254,8 @@ function initDashboard() {
   const fexpEl = document.getElementById('filter-exp');
   const fsourceEl = document.getElementById('filter-source');
   const sortEl = document.getElementById('sort-by');
+  const fstatusEl = document.getElementById('filter-status');
+  const btnClearFilters = document.getElementById('clear-filters-btn');
   const thresholdToggle = document.getElementById('threshold-toggle');
   const missingPrefsBanner = document.getElementById('missing-prefs-banner');
 
@@ -206,15 +269,20 @@ function initDashboard() {
     const mode = fmodeEl.value;
     const exp = fexpEl.value;
     const src = fsourceEl.value;
+    const stat = fstatusEl.value;
     const showOnlyMatches = thresholdToggle && thresholdToggle.checked;
 
     let filtered = window.jobsData.filter(job => {
       const matchSearch = job.title.toLowerCase().includes(term) || job.company.toLowerCase().includes(term);
-      const matchLoc = !loc || job.location === loc || (loc === 'Remote' && job.mode === 'Remote');
+      const matchLoc = !loc || job.location === loc;
       const matchMode = !mode || job.mode === mode;
       const matchExp = !exp || job.experience === exp;
       const matchSrc = !src || job.source === src;
-      return matchSearch && matchLoc && matchMode && matchExp && matchSrc;
+
+      const currentStatus = jobStatuses[job.id] || 'Not Applied';
+      const matchStat = !stat || currentStatus === stat;
+
+      return matchSearch && matchLoc && matchMode && matchExp && matchSrc && matchStat;
     });
 
     if (showOnlyMatches && userPreferences) {
@@ -253,9 +321,24 @@ function initDashboard() {
   fmodeEl.addEventListener('change', renderFiltered);
   fexpEl.addEventListener('change', renderFiltered);
   fsourceEl.addEventListener('change', renderFiltered);
+  fstatusEl.addEventListener('change', renderFiltered);
   sortEl.addEventListener('change', renderFiltered);
   if (thresholdToggle) {
     thresholdToggle.addEventListener('change', renderFiltered);
+  }
+
+  if (btnClearFilters) {
+    btnClearFilters.addEventListener('click', () => {
+      searchEl.value = '';
+      flocEl.value = '';
+      fmodeEl.value = '';
+      fexpEl.value = '';
+      fsourceEl.value = '';
+      fstatusEl.value = '';
+      sortEl.value = 'latest';
+      if (thresholdToggle) thresholdToggle.checked = false;
+      renderFiltered();
+    });
   }
 
   renderFiltered();
@@ -296,7 +379,7 @@ function initSettings() {
   btnSave.addEventListener('click', () => {
     const rawRoles = inputRole.value.split(',').map(s => s.trim()).filter(Boolean);
     const rawSkills = inputSkills.value.split(',').map(s => s.trim()).filter(Boolean);
-    const selLocs = Array.from(inputLocs.selectedOptions).map(o => o.value);
+    const selLocs = Array.from(inputLocs.selectedOptions).map(o => o.value).filter(Boolean);
     const modes = [];
     if (chkRemote.checked) modes.push('Remote');
     if (chkHybrid.checked) modes.push('Hybrid');
@@ -328,6 +411,12 @@ function initSettings() {
     // Completely wipe all user settings and force reload the dataset
     localStorage.removeItem('jobTrackerPreferences');
     userPreferences = null;
+
+    // Clear statuses and digests
+    localStorage.removeItem('jobTrackerStatus');
+    localStorage.removeItem('jobTrackerStatusUpdates');
+    jobStatuses = {};
+    jobStatusUpdates = [];
 
     // Clear today's digest so next time it recalculates with correct empty states
     const today = new Date().toISOString().split('T')[0];
@@ -498,6 +587,39 @@ function initDigest() {
       });
     }
   }
+
+  // Render recent status updates appendment
+  if (jobStatusUpdates.length > 0) {
+    const updSection = document.createElement('div');
+    updSection.style.marginTop = '48px';
+    updSection.className = 'card';
+    updSection.style.maxWidth = '720px';
+    updSection.innerHTML = `
+      <h2 style="font-size: 20px; margin-bottom: 24px;">Recent Status Updates</h2>
+      <div style="display:flex; flex-direction:column; gap: 16px;">
+        ${jobStatusUpdates.slice(0, 5).map(u => {
+      let c = 'var(--color-text)';
+      if (u.status === 'Applied') c = '#0052CC';
+      if (u.status === 'Rejected') c = 'var(--color-error)';
+      if (u.status === 'Selected') c = 'var(--color-success)';
+
+      return `
+            <div style="border:1px solid rgba(17,17,17,0.1); padding: 16px; border-radius: var(--radius); display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <h4 style="margin:0 0 4px 0; font-size:16px;">${u.title}</h4>
+                <div style="font-size:14px; color:rgba(17,17,17,0.6);">${u.company}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:14px; font-weight:600; color: ${c};">${u.status}</div>
+                <div style="font-size:12px; color:rgba(17,17,17,0.4); margin-top:4px;">${u.date}</div>
+              </div>
+            </div>
+          `;
+    }).join('')}
+      </div>
+    `;
+    container.appendChild(updSection);
+  }
 }
 
 function renderPage(pathname) {
@@ -523,11 +645,11 @@ function renderPage(pathname) {
     let toggleHtml = '';
     if (userPreferences) {
       toggleHtml = `
-        <div class="toggle-group">
-          <input type="checkbox" id="threshold-toggle">
+      <div class="toggle-group">
+        <input type="checkbox" id="threshold-toggle">
           <label for="threshold-toggle">Show only jobs above my threshold (${userPreferences.minMatchScore}%)</label>
         </div>
-      `;
+    `;
     }
 
     contentHtml = `
@@ -535,7 +657,7 @@ function renderPage(pathname) {
         <h1>Dashboard</h1>
         <div id="missing-prefs-banner" style="display:none; margin-top:16px; background:rgba(203, 162, 88, 0.1); border-left:4px solid var(--color-warning); padding:12px 16px; border-radius:4px; font-weight:500; color:var(--color-warning);">Set your preferences to activate intelligent matching.</div>
       </header>
-      
+
       ${toggleHtml}
 
       <div class="filter-bar">
@@ -549,7 +671,6 @@ function renderPage(pathname) {
           <option value="Mumbai">Mumbai</option>
           <option value="Gurgaon">Gurgaon</option>
           <option value="Noida">Noida</option>
-          <option value="Remote">Remote</option>
         </select>
         <select id="filter-mode" class="filter-select">
           <option value="">All Modes</option>
@@ -570,11 +691,19 @@ function renderPage(pathname) {
           <option value="Naukri">Naukri</option>
           <option value="Indeed">Indeed</option>
         </select>
+        <select id="filter-status" class="filter-select">
+          <option value="">All Statuses</option>
+          <option value="Not Applied">Not Applied</option>
+          <option value="Applied">Applied</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Selected">Selected</option>
+        </select>
         <select id="sort-by" class="filter-select">
           <option value="latest">Latest</option>
           <option value="score">Match Score</option>
           <option value="salary">Salary Range</option>
         </select>
+        <button id="clear-filters-btn" class="btn btn-secondary">Clear All</button>
       </div>
       <div id="job-list" class="job-list"></div>
     `;
@@ -586,15 +715,16 @@ function renderPage(pathname) {
       </header>
       <div class="card" style="max-width: 720px;">
         <h2 style="font-size: 20px; border-bottom: 1px solid rgba(17,17,17,0.1); padding-bottom: var(--space-16); margin-bottom: var(--space-24);">Notification Preferences</h2>
-        
+
         <div class="input-group">
           <label class="input-label" for="role-keywords">Role keywords (comma-separated)</label>
           <input type="text" id="role-keywords" class="input-field" placeholder="e.g. React, Frontend, Developer" />
         </div>
-        
+
         <div class="input-group">
-          <label class="input-label" for="locations">Preferred locations (select multiple)</label>
-          <select id="locations" class="input-field" multiple size="4">
+          <label class="input-label" for="locations">Preferred location</label>
+          <select id="locations" class="input-field">
+            <option value="">Any Location</option>
             <option value="Bangalore">Bangalore</option>
             <option value="Hyderabad">Hyderabad</option>
             <option value="Pune">Pune</option>
@@ -602,10 +732,9 @@ function renderPage(pathname) {
             <option value="Mumbai">Mumbai</option>
             <option value="Gurgaon">Gurgaon</option>
             <option value="Noida">Noida</option>
-            <option value="Remote">Remote</option>
           </select>
         </div>
-        
+
         <div class="input-group">
           <label class="input-label">Preferred Mode</label>
           <div class="checkbox-group">
