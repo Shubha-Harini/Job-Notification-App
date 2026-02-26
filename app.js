@@ -794,6 +794,34 @@ function renderPage(pathname) {
         <p class="subtext">Collection of testing and validation artifacts.</p>
       </header>
     `;
+  } else if (pathname === '/jt/07-test') {
+    contentHtml = `
+      <header class="context-header">
+        <h1>Test Checklist</h1>
+        <p class="subtext">Verify all critical paths before shipping.</p>
+      </header>
+      <div class="card" style="max-width: 720px;">
+        <div id="test-summary" style="margin-bottom: var(--space-24); padding-bottom: var(--space-16); border-bottom: 1px solid rgba(17,17,17,0.1); font-size: 20px; font-weight: 500;">
+          Tests Passed: <span id="passed-count">0</span> / 10
+        </div>
+        <div id="test-warning" style="display:none; color: var(--color-warning); font-size: 14px; margin-top: -16px; margin-bottom: 24px;">
+          Resolve all issues before shipping.
+        </div>
+        <div id="checklist-container" style="display: flex; flex-direction: column; gap: 16px;"></div>
+        <div style="margin-top: 32px; border-top: 1px solid rgba(17,17,17,0.1); padding-top: 24px; text-align: left;">
+          <button id="reset-tests-btn" class="btn btn-secondary">Reset Test Status</button>
+        </div>
+      </div>
+    `;
+    setTimeout(() => initTestChecklist(), 0);
+  } else if (pathname === '/jt/08-ship') {
+    contentHtml = `
+      <header class="context-header">
+        <h1>Ship Readiness</h1>
+      </header>
+      <div id="ship-container" class="card" style="max-width: 720px; text-align: center; padding: 48px 24px;"></div>
+    `;
+    setTimeout(() => initShipGate(), 0);
   } else {
     contentHtml = `
       <header class="context-header">
@@ -842,3 +870,93 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   renderPage(currentPath);
 });
+
+// TEST CHECKLIST & SHIP LOGIC
+function initTestChecklist() {
+  const checklistItems = [
+    { id: 't1', text: "Preferences persist after refresh", tip: "Go to Settings, save values, refresh the page and verify they remain." },
+    { id: 't2', text: "Match score calculates correctly", tip: "Verify job scores on Dashboard match your set role and preference logic." },
+    { id: 't3', text: '\"Show only matches\" toggle works', tip: "Toggle checkbox on Dashboard and confirm it filters strictly by threshold." },
+    { id: 't4', text: "Save job persists after refresh", tip: "Save a job on Dashboard, refresh page, check if it remains in Saved tab." },
+    { id: 't5', text: "Apply opens in new tab", tip: "Click any Apply button and confirm it creates a new browser tab/window." },
+    { id: 't6', text: "Status update persists after refresh", tip: "Change job status to 'Applied', refresh page, verify the dropdown status stuck." },
+    { id: 't7', text: "Status filter works correctly", tip: "Filter Dashboard by 'Selected' and verify it only shows those matched jobs." },
+    { id: 't8', text: "Digest generates top 10 by score", tip: "Click generate on Digest page and ensure accurately sorted top 10 jobs." },
+    { id: 't9', text: "Digest persists for the day", tip: "Refresh the Digest page and verify the generated list is retained from memory." },
+    { id: 't10', text: "No console errors on main pages", tip: "Open Developer Tools (F12), click through all Nav links, verify no red errors." }
+  ];
+
+  let testStatus = JSON.parse(localStorage.getItem('jobTrackerTestStatus') || '{}');
+  const container = document.getElementById('checklist-container');
+  const passedCountEl = document.getElementById('passed-count');
+  const warningEl = document.getElementById('test-warning');
+  const resetBtn = document.getElementById('reset-tests-btn');
+
+  function updateCount() {
+    let totalChecked = 0;
+    checklistItems.forEach(item => {
+      if (testStatus[item.id] === true) totalChecked++;
+    });
+
+    passedCountEl.innerText = totalChecked;
+    if (totalChecked < 10) {
+      warningEl.style.display = 'block';
+    } else {
+      warningEl.style.display = 'none';
+    }
+    localStorage.setItem('jobTrackerTestStatus', JSON.stringify(testStatus));
+  }
+
+  checklistItems.forEach(item => {
+    const isChecked = testStatus[item.id] === true;
+    const row = document.createElement('label');
+    row.style.display = 'flex';
+    row.style.alignItems = 'flex-start';
+    row.style.gap = '12px';
+    row.style.cursor = 'pointer';
+    row.innerHTML = `
+      <input type="checkbox" style="margin-top: 4px; transform: scale(1.2);" ${isChecked ? 'checked' : ''} />
+      <div>
+        <div style="font-size: 16px; font-weight: 500; color: var(--color-text);">${item.text}</div>
+        <div style="font-size: 14px; color: rgba(17,17,17,0.5); margin-top: 2px;">${item.tip}</div>
+      </div>
+    `;
+
+    const checkbox = row.querySelector('input');
+    checkbox.addEventListener('change', (e) => {
+      testStatus[item.id] = e.target.checked;
+      updateCount();
+    });
+    container.appendChild(row);
+  });
+
+  resetBtn.addEventListener('click', () => {
+    testStatus = {};
+    container.querySelectorAll('input').forEach(cb => cb.checked = false);
+    updateCount();
+  });
+
+  updateCount();
+}
+
+function initShipGate() {
+  const testStatus = JSON.parse(localStorage.getItem('jobTrackerTestStatus') || '{}');
+  let totalChecked = 0;
+  for (let i = 1; i <= 10; i++) {
+    if (testStatus['t' + i] === true) totalChecked++;
+  }
+
+  const container = document.getElementById('ship-container');
+  if (totalChecked < 10) {
+    container.innerHTML = `
+      <h2 style="color: var(--color-error); margin-bottom: 16px;">Access Denied</h2>
+      <p style="font-size: 18px; color: rgba(17,17,17,0.7); margin-bottom: 24px;">Complete all tests before shipping.</p>
+      <button class="btn btn-primary" onclick="navigateTo('/jt/07-test')">Go to Checklist</button>
+    `;
+  } else {
+    container.innerHTML = `
+      <h2 style="color: var(--color-success); margin-bottom: 16px;">Ready to Ship!</h2>
+      <p style="font-size: 18px; color: rgba(17,17,17,0.7);">All 10 critical paths have been verified.</p>
+    `;
+  }
+}
