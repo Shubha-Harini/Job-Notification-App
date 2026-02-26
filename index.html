@@ -1,87 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Job Notification App - Design System</title>
   <link rel="stylesheet" href="index.css">
 </head>
+
 <body>
   <div class="app-container">
-    <!-- TOP BAR -->
-    <header class="top-bar">
-      <div class="top-bar-left">Job Notification App</div>
-      <div class="top-bar-center">Step 1 / 3</div>
-      <div class="top-bar-right">
-        <span class="badge in-progress">In Progress</span>
-      </div>
+    <!-- NAVIGATION BAR -->
+    <header class="navbar">
+      <a href="/" class="navbar-logo">JobApp</a>
+
+      <!-- Desktop Nav -->
+      <nav class="desktop-nav">
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+        <a href="/saved" class="nav-link">Saved</a>
+        <a href="/digest" class="nav-link">Digest</a>
+        <a href="/settings" class="nav-link">Settings</a>
+        <a href="/proof" class="nav-link">Proof</a>
+      </nav>
+
+      <!-- Mobile Hamburger Button -->
+      <button class="menu-toggle" aria-label="Toggle menu" id="mobile-menu-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
     </header>
+
+    <!-- Mobile Navigation Panel -->
+    <nav class="mobile-nav" id="mobile-nav">
+      <a href="/dashboard" class="mobile-nav-link">Dashboard</a>
+      <a href="/saved" class="mobile-nav-link">Saved</a>
+      <a href="/digest" class="mobile-nav-link">Digest</a>
+      <a href="/settings" class="mobile-nav-link">Settings</a>
+      <a href="/proof" class="mobile-nav-link">Proof</a>
+    </nav>
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
-      <!-- CONTEXT HEADER -->
-      <header class="context-header">
-        <h1>Configure Notifications</h1>
-        <p class="subtext">Set your preferences to receive accurate job listings.</p>
-      </header>
-
-      <!-- LAYOUT -->
       <div class="workspace-layout">
-        <!-- PRIMARY WORKSPACE (70%) -->
-        <section class="primary-workspace">
-          
-          <!-- Default Card -->
-          <div class="card">
-            <h2>Job Title Match</h2>
-            <p>We need to know what kind of roles you are actively searching for. Please enter a precise job title below.</p>
-            
-            <div class="input-group">
-              <label class="input-label" for="job-title">Target Role</label>
-              <input type="text" id="job-title" class="input-field" placeholder="e.g. Senior Frontend Engineer" />
-            </div>
-
-            <button class="btn btn-primary">Save Preference</button>
-            <button class="btn btn-secondary" style="margin-left: 16px;">Cancel</button>
-          </div>
-
-          <!-- Empty State -->
-          <div class="state-empty">
-            <h3>No filters added yet</h3>
-            <p>You haven't added any specific location filters for this search.</p>
-            <button class="btn btn-secondary">Add Filter</button>
-          </div>
-
-          <!-- Error State -->
-          <div class="state-error">
-            <h3>Connection Failed</h3>
-            <p>We couldn't save your preferences because the network connection was lost. Please check your internet connection and try again.</p>
-          </div>
-          
+        <section class="primary-workspace" id="router-view">
+          <!-- Router content injected here -->
         </section>
-
-        <!-- SECONDARY PANEL (30%) -->
-        <aside class="secondary-panel">
-          <div class="step-explanation">
-            <h2>How it works</h2>
-            <p>Your job title preference determines the baseline matching algorithm. Keep it standard for better results.</p>
-          </div>
-
-          <div class="prompt-box">
-            <code>Copy this query snippet</code>
-            <p>If you're using our API, you can use this snippet directly in your requests.</p>
-            <button class="btn btn-secondary btn-copy">Copy snippet</button>
-          </div>
-        </aside>
       </div>
     </main>
 
-    <!-- PROOF FOOTER -->
-    <footer class="proof-footer">
-      <div class="checklist-item checked">UI Built</div>
-      <div class="checklist-item">Logic Working</div>
-      <div class="checklist-item">Test Passed</div>
-      <div class="checklist-item">Deployed</div>
-    </footer>
   </div>
+
+  <script src="app.js"></script>
 </body>
+
 </html>
