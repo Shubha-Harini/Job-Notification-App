@@ -185,6 +185,13 @@ p {
   text-underline-offset: 4px;
 }
 
+.settings-actions,
+.digest-actions {
+  display: flex;
+  gap: var(--space-16);
+  margin-bottom: var(--space-24);
+}
+
 @media (max-width: 768px) {
   .desktop-nav {
     display: none;
@@ -203,7 +210,117 @@ p {
   }
 
   .main-content {
-    padding: var(--space-40) var(--space-24);
+    padding: var(--space-24) var(--space-16);
+  }
+
+  .workspace-layout {
+    flex-direction: column;
+    gap: var(--space-24);
+  }
+
+  .primary-workspace,
+  .secondary-panel {
+    flex: 1;
+    width: 100%;
+  }
+
+  .card,
+  .job-card,
+  .digest-card {
+    padding: var(--space-24) !important;
+  }
+
+  .job-header {
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .job-actions {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: var(--space-16);
+  }
+
+  .job-actions>div:first-child {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .job-actions>div:first-child .btn {
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+  }
+
+  .job-actions>div:last-child {
+    width: 100%;
+  }
+
+  .job-actions .status-select {
+    width: 100%;
+    text-align: center;
+    text-align-last: center;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+    gap: var(--space-16);
+    padding: var(--space-16);
+  }
+
+  .filter-input,
+  .filter-select {
+    width: 100%;
+  }
+
+  .state-empty {
+    padding: var(--space-40) var(--space-24) !important;
+  }
+
+  .modal-content {
+    padding: var(--space-24);
+    width: 95%;
+  }
+
+  .job-title {
+    font-size: 20px;
+  }
+
+  .proof-footer {
+    flex-direction: column;
+    gap: var(--space-16);
+    align-items: flex-start;
+  }
+
+  .landing-page h1 {
+    font-size: 36px !important;
+  }
+
+  .landing-page .cta-btn {
+    width: 100%;
+  }
+
+  .settings-actions,
+  .digest-actions {
+    flex-direction: column !important;
+  }
+
+  .settings-actions .btn,
+  .digest-actions .btn {
+    width: 100%;
+  }
+
+  #toast-container {
+    left: var(--space-16);
+    right: var(--space-16);
+    bottom: var(--space-16);
+  }
+
+  .toast {
+    width: auto;
+    text-align: center;
   }
 }
 
@@ -390,6 +507,10 @@ button,
 
 .state-empty p {
   margin: 0 auto var(--space-24) auto;
+}
+
+.digest-card {
+  padding: var(--space-64);
 }
 
 /* PROOF FOOTER */

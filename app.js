@@ -447,7 +447,7 @@ function initSaved() {
 
   if (savedJobs.length === 0) {
     container.innerHTML = `
-      <div class="state-empty" style="border: none; background: #fff; padding: var(--space-64); text-align: left; max-width: 720px;">
+      <div class="state-empty" style="border: none; background: #fff; text-align: left; max-width: 720px;">
         <h3 style="font-size: 24px;">No saved jobs</h3>
         <p style="margin: 0; color: rgba(17,17,17,0.7);">Jobs you bookmark from your dashboard will appear here to easily review later.</p>
       </div>
@@ -461,7 +461,7 @@ function initDigest() {
   const container = document.getElementById('digest-container');
   if (!userPreferences) {
     container.innerHTML = `
-      <div class="state-empty" style="border: none; background: #fff; padding: var(--space-64); text-align: left; max-width: 720px;">
+      <div class="state-empty" style="border: none; background: #fff; text-align: left; max-width: 720px;">
         <h3 style="font-size: 24px;">Set preferences to generate a personalized digest.</h3>
         <button class="btn btn-primary" style="margin-top: 16px;" onclick="navigateTo('/settings')">Go to Settings</button>
       </div>
@@ -477,7 +477,7 @@ function initDigest() {
 
     if (jobs.length === 0) {
       container.innerHTML = `
-        <div class="state-empty" style="border: none; background: #fff; padding: var(--space-64); text-align: left; max-width: 720px;">
+        <div class="state-empty" style="border: none; background: #fff; text-align: left; max-width: 720px;">
           <h3 style="font-size: 24px;">No matching roles today. Check again tomorrow.</h3>
         </div>
       `;
@@ -489,9 +489,9 @@ function initDigest() {
       const isLast = idx === jobs.length - 1;
       return `
         <div style="border-bottom: 1px solid rgba(17,17,17,0.1); padding: 24px 0; ${isLast ? 'border-bottom: none;' : ''}">
-          <div style="display:flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <div style="display:flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 16px;">
             <h3 style="font-size: 20px; font-family: var(--font-heading); margin: 0;">${job.title}</h3>
-            <span style="font-weight: 600; color: var(--color-success); background: rgba(103, 142, 89, 0.1); padding: 4px 8px; border-radius: 4px; font-size: 14px;">Match: ${matchData.score}%</span>
+            <span style="white-space: nowrap; font-weight: 600; color: var(--color-success); background: rgba(103, 142, 89, 0.1); padding: 4px 8px; border-radius: 4px; font-size: 14px;">Match: ${matchData.score}%</span>
           </div>
           <div style="color: rgba(17,17,17,0.7); font-size: 16px; margin-bottom: 12px;">${job.company} • ${job.location} • ${job.experience}</div>
           <a href="${job.applyUrl}" target="_blank" class="btn btn-primary" style="font-size: 14px; padding: 8px 16px; text-decoration: none;">Apply Now</a>
@@ -502,11 +502,11 @@ function initDigest() {
     const formattedDate = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     container.innerHTML = `
-      <div style="margin-bottom: 24px; display: flex; gap: 16px;">
+      <div class="digest-actions">
         <button id="btn-copy-digest" class="btn btn-secondary">Copy Digest to Clipboard</button>
         <button id="btn-email-digest" class="btn btn-secondary">Create Email Draft</button>
       </div>
-      <div class="card" style="max-width: 720px; padding: var(--space-64); margin-bottom: 0;">
+      <div class="card digest-card" style="max-width: 720px; margin-bottom: 0;">
         <div style="text-align: center; margin-bottom: 40px;">
           <h2 style="font-size: 28px; margin-bottom: 8px;">Top 10 Jobs For You — 9AM Digest</h2>
           <div style="color: rgba(17,17,17,0.6); font-size: 16px;">${formattedDate}</div>
@@ -555,7 +555,7 @@ function initDigest() {
   } else {
     // Show generator UI
     container.innerHTML = `
-      <div class="state-empty" style="border: none; background: #fff; padding: var(--space-64); text-align: left; max-width: 720px;">
+      <div class="state-empty" style="border: none; background: #fff; text-align: left; max-width: 720px;">
         <h3 style="font-size: 24px;">Your digest is ready to be compiled</h3>
         <p style="margin: 0 0 24px 0; color: rgba(17,17,17,0.7);">Demo Mode: Daily 9AM trigger simulated manually.</p>
         <button id="generate-digest-btn" class="btn btn-primary">Generate Today's 9AM Digest (Simulated)</button>
@@ -764,7 +764,7 @@ function renderPage(pathname) {
           <input type="range" id="min-score" min="0" max="100" value="40" />
         </div>
 
-        <div style="display: flex; gap: 16px;">
+        <div class="settings-actions">
           <button id="save-prefs" class="btn btn-primary">Save Preferences</button>
           <button id="clear-prefs" class="btn btn-secondary" style="border-color: rgba(139, 0, 0, 0.5); color: #8B0000; background: rgba(139, 0, 0, 0.05);">Clear Preferences & Data</button>
         </div>
